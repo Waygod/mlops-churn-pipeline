@@ -107,6 +107,7 @@ Available endpoints:
 The Flask API is packaged into a Docker image. This ensures the application runs consistently across different environments.
 
 ### 6. Kubernetes Deployment
+The Kubernetes deployment was tested using Kind on a local Windows machine with Docker Desktop. After loading the Docker image into the Kind cluster, the Flask API pod reached `Running` status and the `/predict` endpoint returned a churn prediction through port-forwarding.
 The Docker image is deployed to a Kind Kubernetes cluster using:
 
 - `k8s/deployment.yaml`
@@ -115,6 +116,7 @@ The Docker image is deployed to a Kind Kubernetes cluster using:
 The Kubernetes Deployment manages the Flask API pod. The Kubernetes Service exposes the application using NodePort and port-forwarding.
 
 ### 7. Continuous Integration
+During development, the CI workflow initially failed because the `src` package was not detected during pytest execution in the GitHub runner. This was fixed by setting `PYTHONPATH: .` in the workflow environment.
 The CI workflow runs automatically on push and pull request. It performs:
 
 - dependency installation
