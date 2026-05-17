@@ -1,0 +1,39 @@
+name: CD - Build and Deploy to Google VM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mlops-churn-api:latest .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mlops-churn-api:latest
+
+      - name: Deploy container on Google VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mlops-churn-api:latest
+            docker stop churn-api || true
+            docker rm churn-api || true
+            docker run -d --name churn-api --restart unless-stopped -p 80:5000 ${{ secrets.DOCKERHUB_USERNAME }}/mlops-churn-api:latest
+            docker ps
